@@ -1,0 +1,5 @@
+echo "Creating [~/.bin] This will be where executables are installed for ros_here"
+mkdir -p ~/.bin
+cp humble_here_for_go1 ~/.bin
+echo "Adding ~/.bin to bashrc if needed."
+grep -qxF 'export PATH=$PATH:/home/'$USER/.bin ~/.bashrc  || echo 'export PATH=$PATH:/home/'$USER/.bin >> ~/.bashrc

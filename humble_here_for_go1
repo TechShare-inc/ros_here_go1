@@ -1,0 +1,51 @@
+#!/bin/bash
+
+IP="$1"
+DOMAIN_ID="$2"
+if [ -z "$1" ]
+    then
+        echo "No argument given, If an IP is required, please provide it as an argument. Using [localhost] for this run."
+        IP="localhost"
+fi
+
+if [ -z "$2" ]
+    then
+        echo "No argument given, Assume that ROS_DOMAIN_ID is 0"
+        DOMAIN_ID=0
+fi
+
+xhost +local:root 
+
+XAUTH=/tmp/.docker.xauth
+
+if [ ! -f $XAUTH ]
+then
+    xauth_list=$(xauth nlist :0 | sed -e 's/^..../ffff/')
+    if [ ! -z "$xauth_list" ]
+    then
+        echo $xauth_list | xauth -f $XAUTH nmerge -
+    else
+        touch $XAUTH
+    fi
+    chmod a+r $XAUTH
+fi
+
+docker run -it \
+  --privileged \
+  --runtime=nvidia \
+  --rm \
+  --net=host \
+  --user=techshare\
+  --name="humble" \
+  --env="DISPLAY=$DISPLAY" \
+  --env="QT_X11_NO_MITSHM=1" \
+  --volume="/tmp/.X11-unix:/tmp/.X11-unix:rw" \
+  --env="XAUTHORITY=$XAUTH" \
+  --env="ROS_DOMAIN_ID=$DOMAIN_ID" \
+  --volume="${PWD}/:/home/techshare/humble_ws:rw" \
+  --volume="$XAUTH:$XAUTH" \
+  --volume "/lib/modules:/lib/modules:ro" \
+  go1_inference bash 
+
+# NOTE: Remember to: Sync clocks/timezones with host and pi
+# NOTE: Remember to: set master and host on both host and pi
